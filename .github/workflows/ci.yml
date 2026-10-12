@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: 1.4.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22
+
+      - name: Shell tests
+        run: |
+          find . -name '*.test.sh' -not -path './.git/*' | sort | while read -r t; do
+            echo "== $t"
+            bash "$t"
+          done
+
+      - name: Adapter tests
+        run: bun test pi opencode
+
+      - name: Claude Code plugins
+        run: |
+          npm install -g @anthropic-ai/claude-code@2.1.296
+          claude plugin validate .
+          for p in claude-code/plugins/*/; do
+            claude plugin validate "$p"
+            if jq -e '.modules' "$p/hooks/hooks.json" >/dev/null; then
+              claude plugin test "$p"
+            fi
+          done
