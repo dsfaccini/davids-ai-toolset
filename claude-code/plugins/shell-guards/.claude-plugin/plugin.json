@@ -1,0 +1,6 @@
+{
+  "name": "shell-guards",
+  "version": "0.1.0",
+  "description": "Blocks agent shell commands that do outsized damage: force pushes, busy-wait loops, broad process kills, recursive deletes outside approved roots, and whole-suite test and type-check runs in pydantic-ai",
+  "author": { "name": "dsfaccini" }
+}

@@ -7,6 +7,11 @@
       "name": "last-message-time",
       "source": "./claude-code/plugins/last-message-time",
       "description": "Shows when the last message was sent, after a resume or a long idle"
+    },
+    {
+      "name": "shell-guards",
+      "source": "./claude-code/plugins/shell-guards",
+      "description": "Blocks force pushes, busy-wait loops, broad process kills, recursive deletes outside approved roots, and whole-suite test and type-check runs in pydantic-ai"
     }
   ]
 }

@@ -1,0 +1,28 @@
+{
+  "_comment": "Case matrix for block-force-push.sh, read by block-force-push.test.sh. The hook is global, so there is no in_scope field. COVERAGE BOUNDARY: this matrix holds only the cases decidable from the command string alone — explicit force flags (hook check 1), `+refspec` tokens (check 2), and compound commands where another command's -f flag must not be read as a force push. The two config-dependent checks — a `+`-prefixed refspec configured in remote.<name>.push (check 3) and git aliases that resolve to a force push (check 4) — need repository git state to assert, so they live in the shell-only section of block-force-push.test.sh.",
+  "cases": [
+    {"command": "git push --force", "blocked": true},
+    {"command": "git push -f", "blocked": true},
+    {"command": "git push --force-with-lease", "blocked": true},
+    {"command": "git push --force-if-includes", "blocked": true},
+    {"command": "git push --mirror", "blocked": true},
+    {"command": "git push origin +main", "blocked": true},
+    {"command": "git push origin +refs/heads/main:refs/heads/main", "blocked": true},
+    {"command": "git push -uf origin main", "blocked": true},
+    {"command": "rm -rf /tmp/x && git push --force", "blocked": true},
+    {"command": "echo hi; git push -f", "blocked": true},
+    {"command": "rm -rf /tmp/x; git push --mirror", "blocked": true},
+    {"command": "tar -xzf a.tgz && git push --force-with-lease", "blocked": true},
+    {"command": "git push", "blocked": false},
+    {"command": "git push origin main", "blocked": false},
+    {"command": "git push origin HEAD:refs/heads/main", "blocked": false},
+    {"command": "git push --set-upstream origin feature-branch", "blocked": false},
+    {"command": "rm -rf /tmp/pdtest && git push", "blocked": false},
+    {"command": "git push 2>&1 | tail -2", "blocked": false},
+    {"command": "docker rm -f c && git push", "blocked": false},
+    {"command": "tar -xzf a.tgz && git push origin main", "blocked": false},
+    {"command": "grep -f pat file && git push", "blocked": false},
+    {"command": "make -f Makefile && git push", "blocked": false},
+    {"command": "cp -rf a b && git push origin main", "blocked": false}
+  ]
+}

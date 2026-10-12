@@ -1,0 +1,24 @@
+{
+  "_comment": "Case matrix for block-busy-loop.sh, read by block-busy-loop.test.sh. The hook is global, so there is no in_scope field. Verdicts here are the hook's ACTUAL behaviour, verified by running it: it blocks a no-op spin body (`do :;` / `do true;`) and a non-blocking liveness poll, and it is deliberately conservative everywhere else — a `sleep` or `wait` token anywhere in the command allows it, and a loop with a real body it cannot classify is allowed.",
+  "cases": [
+    {"command": "while kill -0 $pid; do :; done", "blocked": true},
+    {"command": "until [ -f /tmp/done ]; do :; done", "blocked": true},
+    {"command": "while true; do :; done", "blocked": true},
+    {"command": "while pgrep foo; do true; done", "blocked": true},
+    {"command": "until test -f /tmp/flag; do :; done", "blocked": true},
+    {"command": "while [ -e /tmp/lock ]; do :; done", "blocked": true},
+    {"command": "until ps -p 4242; do :; done", "blocked": true},
+    {"command": "until curl -sf localhost:8080/health; do :; done", "blocked": true},
+    {"command": "while kill -0 12345; do echo still running; done", "blocked": true},
+    {"command": "while kill -0 $pid; do sleep 1; done", "blocked": false},
+    {"command": "until [ -f /tmp/done ]; do sleep 2; done", "blocked": false},
+    {"command": "while :; do make_progress; sleep 5; done", "blocked": false},
+    {"command": "while read -r line; do echo $line; done < file", "blocked": false},
+    {"command": "cat f | while read line; do echo $line; done", "blocked": false},
+    {"command": "while true; do real_work; done", "blocked": false},
+    {"command": "for i in 1 2 3; do :; done", "blocked": false},
+    {"command": "wait $pid", "blocked": false},
+    {"command": "git status", "blocked": false},
+    {"command": "while kill -0 $pid; do :; done; sleep 1", "blocked": false}
+  ]
+}

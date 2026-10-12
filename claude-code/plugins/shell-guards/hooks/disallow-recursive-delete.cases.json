@@ -1,0 +1,28 @@
+{
+  "_comment": "Case matrix for disallow-recursive-delete.py, read by disallow-recursive-delete.test.sh. The runner pins the environment every verdict depends on: HOME=/fixture-home, TMPDIR=/fixture-tmp, RECURSIVE_DELETE_ROOTS=/fixture-home/code:~/scratch. None of these paths exist; the guard resolves paths without touching the disk. cwd is the payload's working directory and defaults to /fixture-home/code.",
+  "cases": [
+    {"command": "rm -rf /fixture-home/notes", "blocked": true},
+    {"command": "rm -rf ~", "blocked": true},
+    {"command": "rm -rf /", "blocked": true},
+    {"command": "rm -rf /fixture-home/code", "blocked": true},
+    {"command": "rm -rf", "blocked": true},
+    {"command": "rm -rf build", "cwd": "/fixture-home", "blocked": true},
+    {"command": "rm -rf ../notes", "blocked": true},
+    {"command": "rm -rf *.log", "blocked": true},
+    {"command": "rm -rf \"$BUILD_DIR\"", "blocked": true},
+    {"command": "rm -rf 'unterminated", "blocked": true},
+    {"command": "rm -R /fixture-home/notes", "blocked": true},
+    {"command": "rm --recursive /fixture-home/notes", "blocked": true},
+    {"command": "rm -rf build /fixture-home/notes", "blocked": true},
+    {"command": "echo done && /bin/rm -rf /fixture-home/notes", "blocked": true},
+    {"command": "rm -rf build", "blocked": false},
+    {"command": "rm -rf /fixture-home/code/dist node_modules", "blocked": false},
+    {"command": "rm -rf ~/scratch/run-1", "blocked": false},
+    {"command": "rm -rf $TMPDIR/session", "blocked": false},
+    {"command": "rm -rf /tmp/pytest-of-alice", "blocked": false},
+    {"command": "rm -rf -- -weird-name", "blocked": false},
+    {"command": "rm notes.txt", "blocked": false},
+    {"command": "rm -f /fixture-home/notes/a.txt", "blocked": false},
+    {"command": "git status", "blocked": false}
+  ]
+}
