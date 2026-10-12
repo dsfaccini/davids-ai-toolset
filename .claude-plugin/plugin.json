@@ -1,0 +1,7 @@
+{
+  "name": "last-message-time",
+  "version": "0.1.0",
+  "description": "Shows when the last message was sent, after a resume or a long idle",
+  "author": { "name": "dsfaccini" },
+  "types": "./types/index.d.ts"
+}

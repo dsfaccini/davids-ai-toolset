@@ -1,0 +1,13 @@
+{
+  "name": "claude-code-last-message-time",
+  "description": "A Claude Code mod that shows when the last message was sent",
+  "owner": {
+    "name": "dsfaccini"
+  },
+  "plugins": [
+    {
+      "name": "last-message-time",
+      "source": "./"
+    }
+  ]
+}
