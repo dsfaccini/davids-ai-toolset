@@ -1,13 +1,12 @@
 {
-  "name": "claude-code-last-message-time",
-  "description": "A Claude Code mod that shows when the last message was sent",
-  "owner": {
-    "name": "dsfaccini"
-  },
+  "name": "davids-ai-toolset",
+  "description": "Claude Code plugins from davids-ai-toolset",
+  "owner": { "name": "dsfaccini" },
   "plugins": [
     {
       "name": "last-message-time",
-      "source": "./"
+      "source": "./claude-code/plugins/last-message-time",
+      "description": "Shows when the last message was sent, after a resume or a long idle"
     }
   ]
 }

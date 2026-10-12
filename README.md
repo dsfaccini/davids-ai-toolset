@@ -1,37 +1,17 @@
-# last-message-time
+# davids-ai-toolset
 
-A Claude Code mod that tells you when the last message in a session was sent.
+Skills, Claude Code plugins and extensions for other AI coding assistants.
 
-Resume a session, or come back to a tab you left open, and a dim line above the prompt shows:
+## Layout
 
-```
-Last message: Fri 9 Oct, 14:32 · 3d ago
-```
+| Path | Holds | Install |
+| --- | --- | --- |
+| `skills/<name>/` | Agent Skills (`SKILL.md`), for any harness that reads them | `npx skills add dsfaccini/davids-ai-toolset` |
+| `claude-code/plugins/<name>/` | Claude Code plugins: mods, hooks, commands, subagents | `/plugin install <name> --marketplace dsfaccini/davids-ai-toolset` |
+| `<harness>/<name>/` | Extensions for one other harness (`codex`, `pi`, `opencode`, ...) | See the item's README |
 
-It shows once the last message is 15 minutes old and hides when you send a prompt.
+## Index
 
-## Install
+### Claude Code plugins
 
-At a Claude Code prompt:
-
-```
-/plugin install last-message-time --marketplace dsfaccini/claude-code-last-message-time
-```
-
-Answer `y` to add the marketplace, then pick a scope.
-
-## How it works
-
-- On `--resume` or a fork, Claude Code's `SessionStart` event carries `seconds_since_last_response`; the mod turns that into a timestamp.
-- Each prompt and each finished turn resets it.
-- A one-minute tick keeps the age current while the session sits idle.
-
-Message rows in the transcript carry no timestamp a mod can read, so per-message times aren't possible this way.
-
-## Develop
-
-```
-claude plugin validate .
-claude plugin test .
-claude --plugin-dir .
-```
+- [last-message-time](claude-code/plugins/last-message-time): shows when the last message was sent, after a resume or a long idle.
