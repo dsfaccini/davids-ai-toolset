@@ -5,13 +5,14 @@
 set -u
 DIR="$(cd "$(dirname "$0")" && pwd)"
 RUN="$DIR/run-guards.sh"
-export HOME=/fixture-home TMPDIR=/fixture-tmp RECURSIVE_DELETE_ROOTS=/fixture-home/code
 
 FIXTURES=$(mktemp -d)
 trap 'rm -rf "$FIXTURES"' EXIT
 # The two pydantic-ai guards are scoped by the cwd repo's remote URL.
 PYAI="$FIXTURES/pydantic-ai"
 mkdir -p "$PYAI" && git -C "$PYAI" init -q && git -C "$PYAI" remote add origin https://github.com/pydantic/pydantic-ai.git
+# Pinned after mktemp, which honors TMPDIR on Linux.
+export HOME=/fixture-home TMPDIR=/fixture-tmp RECURSIVE_DELETE_ROOTS=/fixture-home/code
 
 fails=0
 check() {  # <want blocked> <label> <cwd> <payload> [guard ...]
