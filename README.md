@@ -12,6 +12,10 @@ Skills, Claude Code plugins and extensions for other AI coding assistants.
 
 ## Index
 
+### Skills
+
+- [disk-light-worktrees](skills/disk-light-worktrees): sets up git worktrees with artifact-fs, a lazy FUSE checkout with a shared blob cache, for a fraction of a normal worktree's disk.
+
 ### Claude Code plugins
 
 - [last-message-time](claude-code/plugins/last-message-time): shows when the last message was sent, after a resume or a long idle.
