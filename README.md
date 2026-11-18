@@ -15,6 +15,7 @@ Skills, Claude Code plugins and extensions for other AI coding assistants.
 ### Skills
 
 - [disk-light-worktrees](skills/disk-light-worktrees): sets up git worktrees with artifact-fs, a lazy FUSE checkout with a shared blob cache, for a fraction of a normal worktree's disk.
+- [spotlight-vendor-exclude](skills/spotlight-vendor-exclude): keeps macOS Spotlight out of `node_modules`, build output and package caches, so installs stop flooding the indexer while source folders stay searchable.
 
 ### Claude Code plugins
 

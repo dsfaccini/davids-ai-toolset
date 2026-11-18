@@ -1,0 +1,183 @@
+#!/bin/bash
+# Keeps Spotlight out of dependency, cache and build-output folders that tools fill with
+# thousands of files. Source folders stay indexed. Runs on the stock macOS bash 3.2.
+set -u
+export LC_ALL=C
+
+usage() {
+  cat <<'EOF'
+usage: spotlight-vendor-exclude list      [ROOT...]   print the folders it would exclude
+       spotlight-vendor-exclude apply     [ROOT...]   sync them into Spotlight's privacy list (sudo)
+       spotlight-vendor-exclude install   [ROOT...]   run apply now and every hour (sudo)
+       spotlight-vendor-exclude uninstall             remove the hourly job and every entry it added (sudo)
+
+ROOT defaults to the invoking user's home. MIN_FILES (default 1000) is the smallest folder it excludes.
+EOF
+}
+
+MIN_FILES=${MIN_FILES:-1000}
+LABEL=io.github.dsfaccini.spotlight-vendor-exclude
+DAEMON=/Library/LaunchDaemons/$LABEL.plist
+BIN=/usr/local/libexec/spotlight-vendor-exclude
+# SVE_PLIST and SVE_STATE point the tool at a scratch plist, for tests. Then it needs no root
+# and does not restart Spotlight.
+PLIST=${SVE_PLIST:-/System/Volumes/Data/.Spotlight-V100/VolumeConfiguration.plist}
+STATE=${SVE_STATE:-/Library/Application Support/spotlight-vendor-exclude/added.txt}
+
+user_home() {
+  if [ -n "${SUDO_USER:-}" ]; then eval echo "~$SUDO_USER"; else echo "$HOME"; fi
+}
+
+# Caches that live outside any repo, relative to a root.
+KNOWN="Library/pnpm/store go/pkg/mod Library/Developer/Xcode/DerivedData"
+
+count_ok() { # <dir>: has at least MIN_FILES files
+  [ "$(find "$1" -xdev -type f 2>/dev/null | head -n "$MIN_FILES" | wc -l)" -ge "$MIN_FILES" ]
+}
+
+ignored() { # <dir>: git ignores it
+  git -c safe.directory='*' -C "$(dirname "$1")" check-ignore -q "$1" 2>/dev/null
+}
+
+candidates() { # <root>: one path per line, maybe nested
+  local root=$1 k prune=()
+  for k in $KNOWN; do
+    [ -d "$root/$k" ] && echo "$root/$k"
+    prune+=(-o -path "$root/$k")
+  done
+  # Spotlight skips dot-folders on its own, and ~/Library is mostly app data.
+  find "$root" -xdev \( -name '.?*' -o -path "$root/Library" "${prune[@]}" \) -prune -o \
+    -type d \( -name node_modules -o -name bower_components -o -name Pods -o -name target \
+    -o -name dist -o -name build -o -name out -o -name coverage -o -name vendor \) -print -prune -o \
+    -type f \( -name pyvenv.cfg -o -name CACHEDIR.TAG \) -print 2>/dev/null |
+    while IFS= read -r p; do
+      case "$p" in
+        */pyvenv.cfg | */CACHEDIR.TAG) dirname "$p" ;;
+        */node_modules | */bower_components | */Pods) echo "$p" ;;
+        */target) { [ -f "$p/CACHEDIR.TAG" ] || ignored "$p"; } && echo "$p" ;;
+        */vendor) { [ -f "$p/modules.txt" ] || ignored "$p"; } && echo "$p" ;;
+        *) ignored "$p" && echo "$p" ;;
+      esac
+    done
+}
+
+inside() { # <dir> <file of dirs>: dir sits inside one of them
+  local p=$1
+  while p=$(dirname "$p") && [ "$p" != / ] && [ "$p" != . ]; do
+    grep -qxF -- "$p" "$2" && return 0
+  done
+  return 1
+}
+
+list() { # [root...]
+  local r all
+  [ $# -gt 0 ] || set -- "$(user_home)"
+  all=$(mktemp)
+  for r in "$@"; do candidates "${r%/}"; done | sort -u >"$all"
+  while IFS= read -r d; do
+    inside "$d" "$all" || ! count_ok "$d" || echo "$d"
+  done <"$all"
+  rm -f "$all"
+}
+
+need_root() {
+  [ -n "${SVE_PLIST:-}" ] && return
+  [ "$(id -u)" -eq 0 ] || { echo "run with sudo" >&2; exit 1; }
+}
+
+need_plist() {
+  plutil -lint "$PLIST" >/dev/null 2>&1 && return
+  echo "cannot read $PLIST. Give the terminal app Full Disk Access, then retry." >&2
+  exit 1
+}
+
+exclusions() { # current entries, one per line
+  local n i
+  n=$(plutil -extract Exclusions raw -o - "$PLIST" 2>/dev/null) || return 0
+  for ((i = 0; i < n; i++)); do plutil -extract "Exclusions.$i" raw -o - "$PLIST"; echo; done
+}
+
+remove_entries() { # <file of entries to remove>
+  local n i e
+  n=$(plutil -extract Exclusions raw -o - "$PLIST" 2>/dev/null) || return 0
+  for ((i = n - 1; i >= 0; i--)); do
+    e=$(plutil -extract "Exclusions.$i" raw -o - "$PLIST")
+    grep -qxF -- "$e" "$1" && plutil -remove "Exclusions.$i" "$PLIST" && echo "removed $e"
+  done
+}
+
+restart_spotlight() {
+  [ -n "${SVE_PLIST:-}" ] && return
+  killall mds 2>/dev/null # launchd restarts it, and it rereads the list
+}
+
+apply() { # [root...]
+  need_root; need_plist
+  local tmp want have gone out changed=0 d
+  tmp=$(mktemp -d); want=$tmp/want; have=$tmp/have; gone=$tmp/gone
+  list "$@" >"$want"
+  mkdir -p "$(dirname "$STATE")"; touch "$STATE"
+  plutil -extract Exclusions raw -o - "$PLIST" >/dev/null 2>&1 || plutil -insert Exclusions -array "$PLIST"
+  exclusions >"$have"
+
+  while IFS= read -r d; do
+    grep -qxF -- "$d" "$have" && continue
+    plutil -insert Exclusions -string "$d" -append "$PLIST" && echo "added   $d" && changed=1
+    echo "$d" >>"$STATE"
+  done <"$want"
+
+  # Forget entries this tool added whose folder is gone. Entries added by hand stay.
+  while IFS= read -r d; do [ -e "$d" ] || echo "$d"; done <"$STATE" >"$gone"
+  if [ -s "$gone" ]; then
+    out=$(remove_entries "$gone"); [ -n "$out" ] && { echo "$out"; changed=1; }
+    grep -vxF -f "$gone" "$STATE" >"$tmp/state"; cat "$tmp/state" >"$STATE"
+  fi
+  sort -u -o "$STATE" "$STATE"
+
+  [ $changed -eq 1 ] && restart_spotlight
+  echo "$(wc -l <"$want" | tr -d ' ') folders excluded"
+  rm -rf "$tmp"
+}
+
+install_daemon() { # [root...]
+  need_root
+  [ $# -gt 0 ] || set -- "$(user_home)"
+  local r
+  mkdir -p "$(dirname "$BIN")"
+  cp "$0" "$BIN" && chmod 755 "$BIN"
+  launchctl bootout "system/$LABEL" 2>/dev/null
+  rm -f "$DAEMON"
+  plutil -create xml1 "$DAEMON"
+  plutil -insert Label -string "$LABEL" "$DAEMON"
+  plutil -insert ProgramArguments -array "$DAEMON"
+  for r in "$BIN" apply "$@"; do plutil -insert ProgramArguments -string "$r" -append "$DAEMON"; done
+  plutil -insert EnvironmentVariables -dictionary "$DAEMON"
+  plutil -insert EnvironmentVariables.MIN_FILES -string "$MIN_FILES" "$DAEMON"
+  plutil -insert StartInterval -integer 3600 "$DAEMON"
+  plutil -insert RunAtLoad -bool true "$DAEMON"
+  plutil -insert Nice -integer 10 "$DAEMON"
+  plutil -insert LowPriorityIO -bool true "$DAEMON"
+  plutil -insert StandardOutPath -string /var/log/spotlight-vendor-exclude.log "$DAEMON"
+  plutil -insert StandardErrorPath -string /var/log/spotlight-vendor-exclude.log "$DAEMON"
+  launchctl bootstrap system "$DAEMON" && echo "installed $LABEL; log: /var/log/spotlight-vendor-exclude.log"
+}
+
+uninstall_daemon() {
+  need_root; need_plist
+  if [ -z "${SVE_PLIST:-}" ]; then
+    launchctl bootout "system/$LABEL" 2>/dev/null
+    rm -f "$DAEMON" "$BIN"
+  fi
+  if [ -s "$STATE" ]; then remove_entries "$STATE"; restart_spotlight; fi
+  rm -f "$STATE"
+  echo "uninstalled"
+}
+
+cmd=${1:-}; [ $# -gt 0 ] && shift
+case "$cmd" in
+  list) list "$@" ;;
+  apply) apply "$@" ;;
+  install) install_daemon "$@" ;;
+  uninstall) uninstall_daemon ;;
+  *) usage; [ "$cmd" = -h ] || [ "$cmd" = --help ] || exit 2 ;;
+esac
