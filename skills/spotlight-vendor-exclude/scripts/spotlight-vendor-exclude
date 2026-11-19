@@ -105,7 +105,14 @@ remove_entries() { # <file of entries to remove>
 
 restart_spotlight() {
   [ -n "${SVE_PLIST:-}" ] && return
-  killall mds 2>/dev/null # launchd restarts it, and it rereads the list
+  local old i
+  old=$(pgrep -x mds)
+  killall mds # launchd restarts it, and it rereads the list
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    sleep 1
+    [ -n "$(pgrep -x mds)" ] && [ "$(pgrep -x mds)" != "$old" ] && { echo "Spotlight restarted"; return; }
+  done
+  echo "Spotlight did not restart. Run: sudo killall mds" >&2
 }
 
 apply() { # [root...]

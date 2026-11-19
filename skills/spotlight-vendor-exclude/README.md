@@ -2,7 +2,7 @@
 
 Keeps macOS Spotlight out of `node_modules`, build output and package caches, so dependency installs stop feeding thousands of files to the indexer. Source folders stay searchable.
 
-Measured on macOS 27.2 during parallel dependency installs: Spotlight indexed about 55,000 files in 30 minutes, about 37,000 of them under `node_modules`.
+Measured on macOS 27.2 during parallel dependency installs: Spotlight indexed about 55,000 files in 30 minutes, about 37,000 of them under `node_modules`. After one `apply`, the excluded folders dropped to 0 indexed files within two minutes; the pnpm store alone went from 524,296. Source folders kept their entries.
 
 Spotlight's privacy list takes exact paths, not patterns. The script finds the folders and keeps the list in sync. A folder qualifies when it holds at least 1000 files (`MIN_FILES`) and matches one of these:
 
