@@ -18,6 +18,7 @@ Measured on macOS 27.2:
 - Spotlight skips a folder whose name starts with a dot: `.venv`, `.git`, `.wrangler`, `~/.cargo`, `~/.rustup`, `~/.npm`, `~/.bun`.
 - Spotlight skips a folder whose name ends in `.noindex`.
 - Spotlight ignores an empty `.metadata_never_index` file inside a folder. Do not rely on that file.
+- bun with `linker = "isolated"` in `~/.bunfig.toml`, and pnpm by default, keep package files in a dot-folder inside `node_modules`. Suggest the bun setting before excluding bun folders one by one. Leave npm on its default: its `linked` strategy failed parallel installs on npm 12.2.2.
 
 ## What the script excludes
 

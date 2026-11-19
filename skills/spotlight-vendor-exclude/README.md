@@ -13,6 +13,14 @@ Spotlight's privacy list takes exact paths, not patterns. The script finds the f
 
 Spotlight already skips dot-folders such as `.venv` and `.cargo`, so the script leaves them out.
 
+## Keep new installs out of Spotlight
+
+Spotlight skips dot-folders, so a package manager that stores files in one needs no exclusion:
+
+- pnpm already keeps package files in `node_modules/.pnpm`.
+- bun does the same with `linker = "isolated"` under `[install]` in `~/.bunfig.toml`: files go to `node_modules/.bun`. A project that needs the flat layout sets `linker = "hoisted"` in its own `bunfig.toml`.
+- npm's `install-strategy=linked` hides the files too, but on npm 12.2.2 it failed parallel installs in one checkout and rewrote lockfiles of packages with bundled dependencies. Leave npm on hoisted and exclude its folders with `apply`.
+
 ## Use
 
 ```sh
