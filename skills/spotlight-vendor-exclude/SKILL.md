@@ -35,9 +35,10 @@ The script writes the privacy list in `/System/Volumes/Data/.Spotlight-V100/Volu
 
 1. Confirm that Spotlight is busy: `ps -Ao pcpu,comm -r | grep -E 'mds|mdworker' | head`.
 2. Preview the folders: `scripts/spotlight-vendor-exclude list`. The list needs no root.
-3. Ask the user to run `sudo <skill folder>/scripts/spotlight-vendor-exclude install` in a terminal app that has Full Disk Access. The command needs root. `install` applies the list now and installs a LaunchDaemon that repeats it every hour, which catches folders from new checkouts and installs. When the user wants no LaunchDaemon, ask them to run `apply` instead of `install`.
+3. Ask the user to run `sudo <skill folder>/scripts/spotlight-vendor-exclude apply` in a terminal app that has Full Disk Access. The command needs root. Without Full Disk Access it stops with "cannot read".
+   - macOS protects the privacy list from root processes without Full Disk Access, so a LaunchDaemon cannot run `apply`. Ask the user to re-run `apply` after new checkouts and installs.
 4. Verify on one listed folder: `mdfind -count -onlyin <folder> 'kMDItemDisplayName == "*"'`. Done means the count is 0 a few minutes after the run.
 
 ## Undo
 
-`sudo <skill folder>/scripts/spotlight-vendor-exclude uninstall` removes the LaunchDaemon and every entry the script added. Entries the user added by hand stay.
+`sudo <skill folder>/scripts/spotlight-vendor-exclude remove` removes every entry the script added. Entries the user added by hand stay.

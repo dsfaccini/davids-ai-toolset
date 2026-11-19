@@ -58,9 +58,9 @@ if command -v plutil >/dev/null; then
   rm -rf "$R/app/node_modules"
   "$SVE" apply "$R" >/dev/null
   check "apply drops a deleted folder" test "$(entries)" -eq 7
-  "$SVE" uninstall >/dev/null
-  check "uninstall leaves only the hand entry" test "$(plutil -extract Exclusions.0 raw -o - "$SVE_PLIST")" = /by-hand
-  check "uninstall removes one entry per folder" test "$(entries)" -eq 1
+  "$SVE" remove >/dev/null
+  check "remove leaves only the hand entry" test "$(plutil -extract Exclusions.0 raw -o - "$SVE_PLIST")" = /by-hand
+  check "remove removes one entry per folder" test "$(entries)" -eq 1
 else
   echo "skip plist sync checks: no plutil"
 fi

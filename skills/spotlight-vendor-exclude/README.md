@@ -16,13 +16,12 @@ Spotlight already skips dot-folders such as `.venv` and `.cargo`, so the script 
 ## Use
 
 ```sh
-scripts/spotlight-vendor-exclude list              # preview, no root needed
-sudo scripts/spotlight-vendor-exclude install      # apply now, then every hour
-sudo scripts/spotlight-vendor-exclude apply        # apply once
-sudo scripts/spotlight-vendor-exclude uninstall    # remove the job and every entry it added
+scripts/spotlight-vendor-exclude list          # preview, no root needed
+sudo scripts/spotlight-vendor-exclude apply    # add the folders to Spotlight's privacy list
+sudo scripts/spotlight-vendor-exclude remove   # remove every entry it added
 ```
 
-Run the `sudo` commands in a terminal app that has Full Disk Access. Pass folders after the command to scan those instead of your home.
+Run the `sudo` commands in a terminal app that has Full Disk Access. Pass folders after the command to scan those instead of your home. Re-run `apply` after new checkouts and installs: it adds new folders and drops entries whose folder is gone. It cannot run on a schedule, because macOS keeps a LaunchDaemon without Full Disk Access out of the privacy list.
 
 ## Install as an agent skill
 
@@ -45,4 +44,4 @@ Or copy the `skills/spotlight-vendor-exclude` folder into the harness's skills d
 bash skills/spotlight-vendor-exclude/spotlight-vendor-exclude.test.sh
 ```
 
-The test checks the skill's frontmatter and that the folder rules find exactly the expected folders in a fixture tree. On macOS it also syncs a scratch plist: adding, re-running, dropping a deleted folder, and uninstalling. CI runs every `*.test.sh` in the repo.
+The test checks the skill's frontmatter and that the folder rules find exactly the expected folders in a fixture tree. On macOS it also syncs a scratch plist: adding, re-running, dropping a deleted folder, and removing. CI runs every `*.test.sh` in the repo.
