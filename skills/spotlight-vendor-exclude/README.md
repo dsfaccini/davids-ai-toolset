@@ -18,7 +18,7 @@ Spotlight already skips dot-folders such as `.venv` and `.cargo`, so the script 
 Spotlight skips dot-folders, so a package manager that stores files in one needs no exclusion:
 
 - pnpm already keeps package files in `node_modules/.pnpm`.
-- bun does the same with `linker = "isolated"` under `[install]` in `~/.bunfig.toml`: files go to `node_modules/.bun`. A project that needs the flat layout sets `linker = "hoisted"` in its own `bunfig.toml`.
+- bun does the same with `linker = "isolated"` under `[install]` in `~/.bunfig.toml`: files go to `node_modules/.bun`. Code that imports a package it never declared breaks under this layout; declare the package. A project that must keep the flat layout sets `linker = "hoisted"` under `[install]` in its own `bunfig.toml`, then runs `bun install`; bun ignores the key anywhere else.
 - npm's `install-strategy=linked` hides the files too, but on npm 12.2.2 it failed parallel installs in one checkout and rewrote lockfiles of packages with bundled dependencies. Leave npm on hoisted and exclude its folders with `apply`.
 
 ## Use
